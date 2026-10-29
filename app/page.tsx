@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useMemo,useState} from 'react';
+import LogoutButton from "../components/LogoutButton";
 import {LayoutDashboard,ReceiptText,ClipboardCheck,ShieldCheck,AlertCircle,CheckCircle2,Clock3,RefreshCw,ArrowRight,FileText,Link2} from 'lucide-react';
 import type {Store,Transaction} from '../lib/types';
 const money=(n:number)=>`${n<0?'−':''}S$${Math.abs(n).toLocaleString('en-SG',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -17,7 +18,46 @@ export default function Home(){
  async function act(action:string,extra:Record<string,unknown>={}){setBusy(true);setError('');try{const res=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,id:t?.id,version:t?.version,...extra})});const data=await res.json();if(!res.ok)throw Error(data.error||'Action failed');setStore(data);if(action==='reset'){setSelected(null);setTab('overview');}}catch(e:any){setError(e.message);}finally{setBusy(false);}}
  function Table({items}:{items:Transaction[]}){return <div className="table-wrap"><table><thead><tr><th>Transaction</th><th>Source</th><th>Category</th><th>Status</th><th className="right">Amount</th></tr></thead><tbody>{items.map(x=><tr key={x.id} onClick={()=>open(x)} className="click-row"><td><strong>{x.merchant}</strong><small>{x.date} · {x.kind}</small></td><td><span className={'provider '+x.provider.toLowerCase()}>{x.provider}</span></td><td>{x.category}</td><td><span className={'status '+x.status.toLowerCase()}>{statusText[x.status]}</span></td><td className="right amount">{money(x.amount)}</td></tr>)}</tbody></table>{!items.length&&<p className="empty">Nothing here. All caught up!</p>}</div>}
  return <div className="app"><aside className="sidebar"><div className="logo">booksly<span>.</span></div><div className="side-sub">BOOKKEEPING, HANDLED</div><nav><button className={tab==='overview'?'active':''} onClick={()=>{setTab('overview');setSelected(null);}}><LayoutDashboard size={18}/> Overview</button><button className={tab==='transactions'?'active':''} onClick={()=>{setTab('transactions');setSelected(null);}}><ReceiptText size={18}/> Transactions</button><button className={tab==='review'?'active':''} onClick={()=>{setTab('review');setSelected(null);}}><ClipboardCheck size={18}/> Review queue</button></nav><div className="side-bottom"><div className="trust"><ShieldCheck size={19}/> Trust before automation</div><p>Demo only · No live financial posting</p></div></aside>
- <main className="main"><header className="topbar"><div><div className="eyebrow">BOOKSLY / SINGAPORE</div><div className="workspace">Acme Digital Pte Ltd <span>SGD</span></div></div><div className="top-actions"><label>View as <select value={role} onChange={e=>{setRole(e.target.value as any);setSelected(null);}}><option value="customer">Customer</option><option value="accountant">Accountant</option></select></label><button className="reset" onClick={()=>act('reset')} disabled={busy}><RefreshCw size={15}/> Reset demo</button></div></header>
+ <main className="main">
+  <header className="topbar">
+    <div>
+      <div className="eyebrow">BOOKSLY / SINGAPORE</div>
+      <div className="workspace">
+        Acme Digital Pte Ltd <span>SGD</span>
+      </div>
+    </div>
+
+    <div className="top-actions">
+      <label>
+        View as{" "}
+        <select
+          value={role}
+          onChange={(e) => {
+            setRole(e.target.value as any);
+            setSelected(null);
+          }}
+        >
+          <option value="customer">Customer</option>
+          <option value="accountant">Accountant</option>
+        </select>
+      </label>
+          <button
+  className="reset"
+  onClick={() => {
+    if (window.confirm(
+      "Reset all 12 demo transactions and their audit history?"
+    )) {
+      act("reset");
+    }
+  }}
+  disabled={busy}
+>
+  <RefreshCw size={15} />
+  Reset demo
+</button>
+      <LogoutButton />
+    </div>
+  </header>
  <div className="content">{error&&<div className="error" role="alert">{error}<button onClick={()=>setError('')}>×</button></div>}
  {!store?<p>Loading demo transactions…</p>:selected&&t?<><button className="back" onClick={()=>setSelected(null)}>← Back to {tab}</button><div className="page-title"><div><h1>{t.merchant}</h1><p>{t.provider} · {t.ref}</p></div><span className={'status '+t.status.toLowerCase()}>{statusText[t.status]}</span></div><div className="detail-grid"><section className="panel"><h2>Transaction details</h2><div className="detail-row"><span>Amount</span><strong>{money(t.amount)}</strong></div><div className="detail-row"><span>Date</span><strong>{t.date}</strong></div><div className="detail-row"><span>Type</span><strong>{t.kind}</strong></div><div className="detail-row"><span>Proposed category</span><strong>{t.category}</strong></div><div className="detail-row"><span>Evidence</span><strong>{t.evidence}</strong></div><div className="detail-row"><span>Proposal version</span><strong>v{t.version}</strong></div>{t.reconciliation&&<div className="notice"><Link2 size={17}/> Matched group: {t.reconciliation}. Stripe gross payment, fee and Airwallex settlement are related—not separate sales.</div>}<div className="notice light"><ShieldCheck size={17}/> Classification is a simulated proposal. Approval does not post to an accounting ledger.</div></section><section className="panel"><h2>Next action</h2>{t.status==='NEEDS_CUSTOMER'&&<><div className="callout warning"><AlertCircle size={20}/><div><strong>Customer clarification needed</strong><p>{t.reason}</p></div></div>{role==='customer'?<><label className="field-label">Your response / document reference</label><textarea placeholder="Describe the business purpose or provide invoice reference…" value={answer} onChange={e=>setAnswer(e.target.value)} rows={4}/><button className="primary" disabled={busy||answer.trim().length<5} onClick={()=>act('customer_answer',{answer})}>Submit clarification <ArrowRight size={16}/></button><p className="help">For this prototype, document upload is represented by a text reference. No actual file is uploaded.</p></>:<p className="muted">Waiting for customer input. Accountant approval is blocked.</p>}</>}
  {t.status==='READY'&&<><div className="callout success"><CheckCircle2 size={20}/><div><strong>Validation passed</strong><p>Prepared for accountant review. Customer action is not required.</p></div></div>{role==='accountant'?<button className="primary" disabled={busy} onClick={()=>act('approve')}>Approve proposal <ArrowRight size={16}/></button>:<p className="muted">Your accountant will review this proposal.</p>}</>}
