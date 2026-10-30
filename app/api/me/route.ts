@@ -4,6 +4,9 @@ import { createSupabaseServerClient } from "../../../lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Handle GET /api/me using the request session. Return the authenticated user's email and company memberships, including stored roles and company details. Return 401 when not signed in, or 500 when the membership query fails.
+ */
 export async function GET() {
   const supabase = await createSupabaseServerClient();
 

@@ -5,11 +5,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
 
+/**
+ * Render a sign-out button with busy feedback and an inline error message. The actual session change is handled by handleLogout.
+ */
 export default function LogoutButton() {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  /**
+   * Sign out using the browser Supabase client. On success replace the current URL with /login and refresh server data; on failure display the error. Always clear the busy state.
+   */
   async function handleLogout() {
     setBusy(true);
     setError("");
@@ -38,7 +44,7 @@ export default function LogoutButton() {
   }
 
   return (
-    <div>
+    <div className="logout-control">
       <button
         type="button"
         className="reset"
@@ -49,7 +55,7 @@ export default function LogoutButton() {
       </button>
 
       {error && (
-        <small role="alert" style={{ color: "#b42318" }}>
+        <small role="alert" className="logout-error">
           {error}
         </small>
       )}

@@ -5,6 +5,9 @@ import { readSupabaseStore } from "../../../lib/supabase-store";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Handle POST /api/action for a signed-in user. Reset calls reset_booksly_demo; other supported actions validate the request, resolve the demo ID under RLS, and call apply_bookkeeping_action with the proposal version. Return a refreshed Store on success; return JSON errors with 400, 401, 403, 404, 409 or 500 status codes as applicable.
+ */
 export async function POST(req: Request) {
   try {
     const supabase = await createSupabaseServerClient();
@@ -23,7 +26,7 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    // Reset must not modify the shared database.
+    // Delegate the database demo reset to the installed RPC; its scope and permissions live in PostgreSQL.
     if (body.action === "reset") {
   const { error } = await supabase.rpc("reset_booksly_demo");
 

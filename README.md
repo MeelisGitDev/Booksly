@@ -1,68 +1,53 @@
-# Booksly — Interactive assessment prototype
+# Booksly
 
-**Trust Before Automation** · Singapore-first · Next.js + TypeScript
+**Trust before automation** · Singapore-first bookkeeping prototype
 
-This is a self-contained demonstration built from scratch because the existing Hubtal application was not provided. It does **not** connect to Stripe, Airwallex, Supabase, an LLM, or an accounting ledger. Source imports, classification proposals, evidence matching and authentication are **simulated**. The application implements actual API-backed state changes, accountant review guards, proposal version checks, and an audit history.
+Booksly uses Next.js 15, React, TypeScript, Supabase Auth and PostgreSQL. Customers clarify transactions and accountants review classification proposals in a shared workflow. Provider imports, AI classification and evidence matching remain simulated. Approval does not post to an accounting ledger.
 
-## Start on a Mac
+## Run locally
 
-Requires Node.js 20.9+ (Node.js 22 recommended).
+Requires Node.js 20.9 or later.
 
 ```bash
-unzip booksly-prototype.zip
-cd booksly-prototype
 npm install
+```
+
+Create `.env.local` with the values described in [`.env.example`](.env.example). Use the existing Supabase project with its configured tables, RLS policies and database functions; this repository does not contain their SQL setup.
+
+```bash
 npm run dev
 ```
 
-Open http://localhost:3000
+Open http://localhost:3000/login and sign in with an account in your configured Supabase project.
 
-## Demo script (5 minutes)
+## Documentation
 
-1. **Overview** — see imported transactions and outstanding questions.
-2. **Transactions** — open **Customer order #1043** (SGD 1,000), **Stripe processing fee** (−SGD 30), and **Stripe settlement** (SGD 970). They share `SETTLEMENT-1043`; the payout is an internal transfer, not new revenue.
-3. **Customer role** — open **AWS** (missing invoice) or **NOVA GLOBAL** (unclear purpose). Enter a clarification, then submit. The item moves to **Needs accountant** and creates an audit event.
-4. **Accountant role** — open **NOVA GLOBAL**, assign a category, and approve. Approval creates a new audit event. Other READY transactions can also be approved.
-5. **Controls** — try approving an item before customer clarification; the UI blocks it. Server endpoints also validate role-intended actions and proposal versions (demo roles are not authenticated).
-6. **Reset demo** restores initial sample transactions.
+- [Technical guide](docs/technical-overview.md): architecture, TypeScript basics, authentication, data flow, endpoints and current limits.
+- [Function reference](docs/functions.md): explanations generated from source JSDoc comments, including React callbacks.
 
-## Implemented
+Hover over named functions in your IDE to read their comments. After changing source comments, regenerate the reference:
 
-- Three responsive views: Overview, Transactions, Review queue
-- Customer and accountant role switch for demonstration
-- 12 realistic seeded Stripe/Airwallex records
-- Explicit transaction status and proposal version
-- Customer clarification -> accountant review
-- Accountant classification correction and approval
-- Server-side validation of state transitions and optimistic version checks
-- Local audit history
-- Reconciliation group illustration (Stripe gross, fee, payout)
-- Reset to seed data
+```bash
+npm run docs
+```
 
-## Deliberately not implemented
+Check the production build:
 
-- Supabase database, authentication, tenant RLS and file storage
-- Live provider imports/webhooks and actual reconciliation engine
-- Actual AI calls and document OCR
-- Actual file upload or evidence verification
-- Singapore GST determination
-- Accounting export/posting
-- Durable, multi-instance database persistence
+```bash
+npm run build
+```
 
-**Important:** The role switch is a UI demo, not security. The API has no real authentication. Never expose this app with real financial data or represent it as production-ready.
+## Explore the workflow
 
-## Persistence
+1. View transaction totals, outstanding questions and the review queue.
+2. Open a transaction to see its classification, evidence and audit history.
+3. As a customer, submit a clarification for a transaction needing customer input.
+4. With an authorized accountant account, correct a classification or approve an eligible proposal.
+5. Use **Reset demo** to request the database demo reset after confirmation. Its scope and permissions are determined by the installed `reset_booksly_demo` function.
 
-The local dev server stores edits in `data/state.json` (gitignored). The file is created when the first change occurs. The initial records are seeded in `lib/seed.ts`. Reset restores the seed. This file-based storage is intentionally for **single-instance local demonstration only**; Railway instances can have ephemeral storage and concurrent writes are not safe. Before real deployment, replace it with Supabase PostgreSQL and implement authenticated server-side authorization, RLS, transactional updates and immutable audit records.
+The **Demo view** selector previews customer/accountant screens. It does not change your authenticated account or grant permissions. The active persistence layer is Supabase; the JSON storage and seed helpers in `lib` remain from the earlier local version.
 
-## Production path
-
-1. Supabase tables: companies, memberships, source_transactions, transactions, proposals, documents, exceptions, review_decisions, audit_events, processing_jobs.
-2. Supabase Auth, RLS by company, secure service-role boundaries.
-3. Transactional versioned approval with optimistic concurrency.
-4. Idempotent provider ingestion, reconciliation, background jobs and retries.
-5. AI classification behind strict schema validation and deterministic controls.
-6. Accounting-system export with idempotency, acknowledgement and reconciliation.
+Live provider imports, actual file uploads, OCR, live AI classification, GST determination and accounting export are not implemented. The workspace header still shows a static demo company name.
 
 ## AI usage disclosure
 

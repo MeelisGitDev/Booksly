@@ -4,6 +4,9 @@ import { createSupabaseServerClient } from "../../../lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Handle GET /api/transactions for a signed-in user. Return raw database transactions with nested classifications and a count, ordered by transaction date. Database RLS determines visible rows; this endpoint does not apply the first-company filter used by readSupabaseStore. Return 401 for authentication failure or 500 for a query error.
+ */
 export async function GET() {
   const supabase = await createSupabaseServerClient();
 

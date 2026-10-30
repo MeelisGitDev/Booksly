@@ -18,6 +18,9 @@ const statusMap: Record<string, Status> = {
   approved: "APPROVED",
 };
 
+/**
+ * Load the signed-in user's first company membership, then fetch its transactions, classifications and audit logs. Convert database field names and statuses into the UI Store shape. Throws for authentication, membership, query or unsupported classification errors; updatedAt is the response creation time.
+ */
 export async function readSupabaseStore(): Promise<Store> {
   const supabase = await createSupabaseServerClient();
 
@@ -75,7 +78,7 @@ export async function readSupabaseStore(): Promise<Store> {
 
   if (error) throw new Error(error.message);
 
-  const transactions: Transaction[] = (data ?? []).map((row) => {
+  const transactions: Transaction[] = (data ?? []).map(/** Convert one database transaction and its related classification into the UI Transaction shape. Require a classification with a recognised status rather than displaying incomplete data. */ (row) => {
     const c = (Array.isArray(row.classifications)
       ? row.classifications[0]
       : row.classifications) as ClassificationRow | null;
@@ -107,7 +110,7 @@ export async function readSupabaseStore(): Promise<Store> {
       reconciliation: row.reconciliation ?? undefined,
       isTransfer: row.is_transfer,
       audit: (row.audit_logs ?? [])
-  .map((event) => {
+  .map(/** Convert one audit row into a timestamp, display actor and action. Prefer the stored actor label, falling back to Authenticated user or System. */ (event) => {
     const details = event.details as {
       actor?: string;
     } | null;
@@ -120,7 +123,7 @@ export async function readSupabaseStore(): Promise<Store> {
       action: event.action,
     };
   })
-  .sort((a, b) => a.at.localeCompare(b.at)),
+  .sort(/** Compare ISO timestamp strings to sort audit events from oldest to newest. The detail screen reverses this order for display. */ (a, b) => a.at.localeCompare(b.at)),
     };
   });
 

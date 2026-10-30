@@ -13,7 +13,10 @@ const entries: Array<[string,'Stripe'|'Airwallex',string,string,number,string,st
  ['tx11','Stripe','pi_3QX1011','Customer order #1044',425,'Customer payment','Sales revenue','READY','Invoice INV-1044'],
  ['tx12','Airwallex','awx_2012','Cross-border services',-860,'Supplier payment','Professional services','NEEDS_ACCOUNTANT','Supplier invoice']
 ];
-export function initialState():Store { return {updatedAt:new Date().toISOString(),transactions:entries.map((r,i):Transaction=>({
+/**
+ * Create a fresh set of 12 sample transactions and their simulated import audit events. Returns a Store; this helper does not write to Supabase or to disk.
+ */
+export function initialState():Store { return {updatedAt:new Date().toISOString(),transactions:entries.map(/** Convert one sample-data tuple into a typed Transaction, using its position to choose the demo date. */ (r,i):Transaction=>({
  id:r[0],provider:r[1],ref:r[2],merchant:r[3],date:`2026-10-${String(11+i).padStart(2,'0')}`,amount:r[4],currency:'SGD',kind:r[5],category:r[6],status:r[7],evidence:r[8],reason:r[9],isTransfer:r[10],version:1,
  reconciliation:r[0]==='tx04'||r[0]==='tx05'||r[0]==='tx06'?'SETTLEMENT-1043':undefined,
  audit:[{at:'2026-10-28T08:00:00.000Z',actor:'Demo importer',action:'Source record imported'},{at:'2026-10-28T08:00:02.000Z',actor:'Rules engine',action:'Classification proposal prepared (simulated)'}]
